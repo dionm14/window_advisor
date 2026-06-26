@@ -1,0 +1,33 @@
+# Paste into configuration.yaml. Restart HA after first install.
+# Entities below match an AirGradient ONE auto-discovered as "Air Monitor"
+# and the default weather.forecast_home entity from Met.no.
+
+sensor:
+  - platform: window_advisor
+    name: Window Advisor
+    indoor_temp: sensor.air_monitor_temperature
+    indoor_humidity: sensor.air_monitor_humidity
+    indoor_co2: sensor.air_monitor_carbon_dioxide
+    indoor_pm25: sensor.air_monitor_pm2_5
+    indoor_voc: sensor.air_monitor_voc_index
+    indoor_nox: sensor.air_monitor_nox_index
+    # outdoor_pm25: sensor.purpleair_pm2_5   # optional
+    weather_entity: weather.forecast_home
+    mode: auto                # auto | cool | heat | off
+    cooling_setpoint: 24.0    # °C — target indoor when AC season
+    heating_setpoint: 20.0    # °C — target indoor when heat season
+    max_outdoor_dewpoint: 16.0
+    co2_threshold: 900
+    co2_urgent: 1400
+    outdoor_pm25_veto: 25
+    pm25_ratio_buffer: 5
+    horizon_hours: 8
+    hysteresis: 1.5
+    history_hours: 2
+    scan_interval: 600        # seconds between recomputes (≥60)
+
+# Companion binary sensor — true when the advisor says "open".
+# MUST appear AFTER the sensor block above (it shares the coordinator).
+binary_sensor:
+  - platform: window_advisor
+    name: Window Advisor      # must match the sensor 'name'

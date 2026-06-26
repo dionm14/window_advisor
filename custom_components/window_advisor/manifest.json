@@ -1,0 +1,10 @@
+{
+  "domain": "window_advisor",
+  "name": "Window Advisor",
+  "version": "0.1.0",
+  "documentation": "https://github.com/local/window-open",
+  "codeowners": ["@matt"],
+  "iot_class": "calculated",
+  "requirements": [],
+  "dependencies": ["recorder", "weather"]
+}
