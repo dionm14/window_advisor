@@ -31,31 +31,19 @@ For each hour in the forecast horizon (default 8h):
 6. **Trajectory fit** (linear OLS on last 2h of indoor temp & CO2) → reports slope and predicts when indoor temp will cross the active setpoint.
 7. **Hysteresis** vs. the last action prevents flip-flop.
 
-## Install
+## Install (via HACS)
 
-Hosted on a self-hosted Forgejo; install via the included scripts (HACS doesn't support non-GitHub hosts).
-
-```bash
-# On the machine that has your HA config dir mounted (e.g. SSH into TrueNAS):
-git clone http://truenas.lan:30142/dionm11/window-advisor.git /tmp/window-advisor
-sudo /tmp/window-advisor/scripts/install.sh /path/to/ha/config
-```
-
-`install.sh` clones the repo into `<ha_config>/.window_advisor_repo` and symlinks `<ha_config>/custom_components/window_advisor` into it. Re-runnable; updates the working copy if it already exists.
-
-Then:
-
-1. Paste the snippet from `config.example.yaml` into your `configuration.yaml` and edit entity IDs to match your sensors.
-2. **Restart Home Assistant** (not just "reload YAML" — new integrations need a full restart).
-3. Check Developer Tools → States for `sensor.window_advisor_action`.
+1. HACS → Integrations → ⋮ (top-right) → **Custom repositories**
+2. Repository: `https://github.com/dionm14/window_advisor`, Category: **Integration**, Add
+3. Find **Window Advisor** in the HACS list → **Download**
+4. **Restart Home Assistant**
+5. Paste the YAML from `config.example.yaml` into `configuration.yaml`, edit entity IDs
+6. Restart Home Assistant again (config-loaded restart)
+7. Verify `sensor.window_advisor_action` in Developer Tools → States
 
 ## Update
 
-```bash
-sudo /path/to/ha/config/.window_advisor_repo/scripts/update.sh /path/to/ha/config
-```
-
-Then restart HA.
+HACS shows "Update available" when a new release is tagged → click → restart HA.
 
 ## TRMNL integration
 
@@ -97,6 +85,8 @@ custom_components/window_advisor/
   binary_sensor.py # windows_should_be_open
   model.py         # pure decision logic (trajectory fit + scoring + hysteresis)
   psychro.py       # enthalpy, dewpoint, wet-bulb, °F/°C/°K conversion
+hacs.json          # HACS metadata
+info.md            # shown in HACS install dialog
 config.example.yaml
 tests/             # pure-Python tests for psychro + model
 ```
@@ -107,6 +97,3 @@ tests/             # pure-Python tests for psychro + model
 python -m pytest
 ```
 
-## Notes for HA on TrueNAS SCALE (port 30103)
-
-You're on the HA Container app, not HAOS. The config dir lives in the app's persistent storage — usually `/mnt/<pool>/ix-applications/releases/home-assistant/volumes/.../config/` or the path you set when installing the app. Drop `custom_components/window_advisor/` there.
