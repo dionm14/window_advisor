@@ -33,16 +33,29 @@ For each hour in the forecast horizon (default 8h):
 
 ## Install
 
-This is a YAML-configured custom integration (no UI config flow yet — keeps install minimal).
+Hosted on a self-hosted Forgejo; install via the included scripts (HACS doesn't support non-GitHub hosts).
 
-1. Copy the `custom_components/window_advisor/` folder into your HA config dir:
-   ```
-   <ha_config>/custom_components/window_advisor/
-   ```
-   On HAOS / TrueNAS SCALE: SSH or use the File Editor add-on / Studio Code Server.
-2. Paste the snippet from `config.example.yaml` into your `configuration.yaml` and edit entity IDs to match your sensors.
-3. **Restart Home Assistant** (not just "reload YAML" — new integrations need a full restart).
-4. Check Developer Tools → States for `sensor.window_advisor_action`.
+```bash
+# On the machine that has your HA config dir mounted (e.g. SSH into TrueNAS):
+git clone http://truenas.lan:30142/dionm11/window-advisor.git /tmp/window-advisor
+sudo /tmp/window-advisor/scripts/install.sh /path/to/ha/config
+```
+
+`install.sh` clones the repo into `<ha_config>/.window_advisor_repo` and symlinks `<ha_config>/custom_components/window_advisor` into it. Re-runnable; updates the working copy if it already exists.
+
+Then:
+
+1. Paste the snippet from `config.example.yaml` into your `configuration.yaml` and edit entity IDs to match your sensors.
+2. **Restart Home Assistant** (not just "reload YAML" — new integrations need a full restart).
+3. Check Developer Tools → States for `sensor.window_advisor_action`.
+
+## Update
+
+```bash
+sudo /path/to/ha/config/.window_advisor_repo/scripts/update.sh /path/to/ha/config
+```
+
+Then restart HA.
 
 ## TRMNL integration
 
