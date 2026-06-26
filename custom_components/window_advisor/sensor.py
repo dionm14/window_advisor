@@ -47,8 +47,8 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Optional(CONF_HORIZON_HOURS, default=8): vol.All(int, vol.Range(min=1, max=48)),
     vol.Optional(CONF_HYSTERESIS, default=1.5): vol.Coerce(float),
     vol.Optional(CONF_HISTORY_HOURS, default=2): vol.All(int, vol.Range(min=1, max=24)),
-    vol.Optional(CONF_SCAN_INTERVAL, default=DEFAULT_SCAN_INTERVAL_S):
-        vol.All(vol.Coerce(int), vol.Range(min=60)),
+    # CONF_SCAN_INTERVAL handled by base PLATFORM_SCHEMA (cv.time_period).
+    # Accepts int seconds, "HH:MM:SS", or {seconds: N}. Default applied in setup.
 })
 
 
@@ -59,7 +59,7 @@ async def async_setup_platform(
     discovery_info: DiscoveryInfoType | None = None,
 ) -> None:
     name = config[CONF_NAME]
-    scan = timedelta(seconds=config[CONF_SCAN_INTERVAL])
+    scan = config.get(CONF_SCAN_INTERVAL) or timedelta(seconds=DEFAULT_SCAN_INTERVAL_S)
     coordinator = WindowAdvisorCoordinator(hass, name, config, scan)
 
     hass.data.setdefault(DOMAIN, {})[name] = coordinator

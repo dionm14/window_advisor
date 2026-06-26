@@ -24,7 +24,7 @@ sensor:
     horizon_hours: 8
     hysteresis: 1.5
     history_hours: 2
-    scan_interval: 600        # seconds between recomputes (≥60)
+    scan_interval: "00:10:00" # HH:MM:SS; or omit for default 10 min
 
 # Companion binary sensor — true when the advisor says "open".
 # MUST appear AFTER the sensor block above (it shares the coordinator).
