@@ -108,7 +108,7 @@ class WindowAdvisorActionSensor(_Base):
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
         data = self.coordinator.data or {}
-        d = data.get("decision", {})
+        d = data.get("decision") or {}
         return {
             "score": d.get("score"),
             "mode": d.get("mode"),
