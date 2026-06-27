@@ -8,7 +8,7 @@ from typing import Any
 
 from homeassistant.components.recorder import history, get_instance
 from homeassistant.core import HomeAssistant, State
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 from .const import (
     CONF_CO2_THRESHOLD, CONF_CO2_URGENT, CONF_COOLING_SETPOINT,
@@ -97,7 +97,19 @@ class WindowAdvisorCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         s_weather = get(CONF_WEATHER)
 
         if s_weather is None:
-            raise UpdateFailed(f"Weather entity {cfg.get(CONF_WEATHER)} not found")
+            # Likely a startup race — weather integration hasn't registered the
+            # entity yet. Log + return last data (or empty) so we retry next cycle
+            # instead of locking entities into "unavailable".
+            _LOGGER.warning(
+                "Weather entity %s not found yet; retrying next cycle. "
+                "Currently registered weather.*: %s",
+                cfg.get(CONF_WEATHER),
+                sorted(
+                    s.entity_id for s in self.hass.states.async_all()
+                    if s.entity_id.startswith("weather.")
+                ),
+            )
+            return self.data or {"decision": None, "indoor": None, "outdoor": None}
 
         wattrs = s_weather.attributes
         weather_unit = wattrs.get("temperature_unit")

@@ -64,11 +64,10 @@ async def async_setup_platform(
 
     hass.data.setdefault(DOMAIN, {})[name] = coordinator
 
-    # Kick off a refresh without blocking setup — entities will appear immediately
-    # and become available once the first successful update completes. This also
-    # surfaces underlying errors in the logs instead of hiding them as
-    # ConfigEntryNotReady (which is for config-entry integrations, not YAML platforms).
-    await coordinator.async_refresh()
+    # Defer first refresh: schedule it in the background so platform setup
+    # completes before we try to read other integrations' states (avoids races
+    # with weather integration startup).
+    hass.async_create_task(coordinator.async_request_refresh())
 
     async_add_entities([
         WindowAdvisorActionSensor(coordinator, name),

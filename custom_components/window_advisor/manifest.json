@@ -1,7 +1,7 @@
 {
   "domain": "window_advisor",
   "name": "Window Advisor",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "documentation": "https://github.com/dionm14/window_advisor",
   "issue_tracker": "https://github.com/dionm14/window_advisor/issues",
   "codeowners": ["@dionm14"],
