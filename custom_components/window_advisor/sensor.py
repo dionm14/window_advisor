@@ -9,8 +9,8 @@ import voluptuous as vol
 from homeassistant.components.sensor import (
     PLATFORM_SCHEMA, SensorEntity, SensorStateClass,
 )
-from homeassistant.const import CONF_NAME, CONF_SCAN_INTERVAL
-from homeassistant.core import HomeAssistant
+from homeassistant.const import CONF_NAME, CONF_SCAN_INTERVAL, EVENT_HOMEASSISTANT_STARTED
+from homeassistant.core import HomeAssistant, Event
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
@@ -64,10 +64,16 @@ async def async_setup_platform(
 
     hass.data.setdefault(DOMAIN, {})[name] = coordinator
 
-    # Defer first refresh: schedule it in the background so platform setup
-    # completes before we try to read other integrations' states (avoids races
-    # with weather integration startup).
-    hass.async_create_task(coordinator.async_request_refresh())
+    # First refresh must wait until HA is fully started — otherwise the weather
+    # integration may not have registered its entities yet (states.async_all()
+    # returns [] for weather.* during early startup).
+    async def _first_refresh(_event: Event | None = None) -> None:
+        await coordinator.async_request_refresh()
+
+    if hass.is_running:
+        hass.async_create_task(_first_refresh())
+    else:
+        hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STARTED, _first_refresh)
 
     async_add_entities([
         WindowAdvisorActionSensor(coordinator, name),
