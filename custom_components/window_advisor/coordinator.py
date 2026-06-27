@@ -62,10 +62,10 @@ class WindowAdvisorCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             co2_urgent_ppm=config.get(CONF_CO2_URGENT, 1400.0),
             outdoor_pm25_veto=config.get(CONF_OUTDOOR_PM25_VETO, 25.0),
             pm25_ratio_buffer=config.get(CONF_PM25_RATIO_BUFFER, 5.0),
-            horizon_h=config.get(CONF_HORIZON_HOURS, 8),
-            hysteresis=config.get(CONF_HYSTERESIS, 1.5),
+            horizon_h=int(config.get(CONF_HORIZON_HOURS, 8)),
+            hysteresis=float(config.get(CONF_HYSTERESIS, 1.5)),
         )
-        self._history_hours = config.get(CONF_HISTORY_HOURS, 2)
+        self._history_hours = int(config.get(CONF_HISTORY_HOURS, 2))
         self._mode = config.get(CONF_MODE, "auto")
 
     @property
