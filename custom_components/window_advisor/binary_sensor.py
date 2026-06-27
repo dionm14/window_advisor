@@ -1,55 +1,42 @@
-"""Binary sensor: True when advisor says windows should be open. For automations."""
+"""Binary sensor: windows should be open (config-entry based)."""
 from __future__ import annotations
 
 from typing import Any
 
-import voluptuous as vol
-
-from homeassistant.components.binary_sensor import (
-    PLATFORM_SCHEMA, BinarySensorEntity,
-)
-from homeassistant.const import CONF_NAME
+from homeassistant.components.binary_sensor import BinarySensorEntity
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DEFAULT_NAME, DOMAIN
+from .const import DOMAIN
 from .coordinator import WindowAdvisorCoordinator
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
-})
 
-
-async def async_setup_platform(
+async def async_setup_entry(
     hass: HomeAssistant,
-    config: ConfigType,
+    entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
-    discovery_info: DiscoveryInfoType | None = None,
 ) -> None:
-    """Pair with an already-set-up sensor platform of the same name."""
-    name = config[CONF_NAME]
-    coordinator = hass.data.get(DOMAIN, {}).get(name)
-    if coordinator is None:
-        # Coordinator may not exist yet if sensor platform hasn't loaded.
-        # In single-config-file setups, HA loads platforms in order; document the dependency.
-        raise RuntimeError(
-            f"window_advisor sensor platform '{name}' must be configured before binary_sensor"
-        )
-    async_add_entities([WindowsShouldBeOpen(coordinator, name)])
+    coordinator: WindowAdvisorCoordinator = hass.data[DOMAIN][entry.entry_id]
+    async_add_entities([WindowsShouldBeOpen(coordinator, entry)])
 
 
 class WindowsShouldBeOpen(CoordinatorEntity[WindowAdvisorCoordinator], BinarySensorEntity):
     _attr_should_poll = False
+    _attr_has_entity_name = True
     _attr_icon = "mdi:window-open"
+    _attr_name = "Windows Should Be Open"
 
-    def __init__(self, coordinator: WindowAdvisorCoordinator, base_name: str):
+    def __init__(self, coordinator: WindowAdvisorCoordinator, entry: ConfigEntry):
         super().__init__(coordinator)
-        self._attr_name = f"{base_name} Windows Should Be Open"
-        slug = base_name.lower().replace(" ", "_")
-        self._attr_unique_id = f"{slug}_should_open"
+        self._attr_unique_id = f"{entry.entry_id}_should_open"
+        self._attr_device_info = {
+            "identifiers": {(DOMAIN, entry.entry_id)},
+            "name": entry.title,
+            "manufacturer": "window_advisor",
+            "model": "Decision engine",
+        }
 
     @property
     def is_on(self) -> bool | None:

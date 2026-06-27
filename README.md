@@ -37,13 +37,19 @@ For each hour in the forecast horizon (default 8h):
 2. Repository: `https://github.com/dionm14/window_advisor`, Category: **Integration**, Add
 3. Find **Window Advisor** in the HACS list → **Download**
 4. **Restart Home Assistant**
-5. Paste the YAML from `config.example.yaml` into `configuration.yaml`, edit entity IDs
-6. Restart Home Assistant again (config-loaded restart)
-7. Verify `sensor.window_advisor_action` in Developer Tools → States
+5. Settings → Devices & Services → **Add Integration** → search "Window Advisor"
+6. Walk the two-step form:
+   - **Entities**: pick your weather entity + indoor temp + humidity (required). CO2, PM2.5, VOC, NOx optional.
+   - **Preferences**: setpoints (°C), dewpoint ceiling, CO2 thresholds, etc. Defaults are reasonable.
+7. Done. Entities appear under the new device.
+
+### Edit later
+
+Settings → Devices & Services → **Window Advisor** → **Configure**. Adjust any entity or preference; HA reloads the integration automatically.
 
 ## Update
 
-HACS shows "Update available" when a new release is tagged → click → restart HA.
+HACS shows "Update available" when a new release is tagged on GitHub → click → restart HA.
 
 ## TRMNL integration
 
@@ -85,9 +91,10 @@ custom_components/window_advisor/
   binary_sensor.py # windows_should_be_open
   model.py         # pure decision logic (trajectory fit + scoring + hysteresis)
   psychro.py       # enthalpy, dewpoint, wet-bulb, °F/°C/°K conversion
+  config_flow.py   # UI install + options flow (entity selectors)
+  translations/en.json
 hacs.json          # HACS metadata
 info.md            # shown in HACS install dialog
-config.example.yaml
 tests/             # pure-Python tests for psychro + model
 ```
 

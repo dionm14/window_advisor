@@ -4,8 +4,10 @@ Tells you when to open / close windows for best air quality + energy savings. Re
 
 ## After install
 
-1. Paste the YAML from `config.example.yaml` into `configuration.yaml` (edit entity IDs).
-2. Restart Home Assistant.
-3. Watch `sensor.window_advisor_action` and `binary_sensor.window_advisor_windows_should_be_open`.
+1. Restart Home Assistant.
+2. Settings → Devices & Services → **Add Integration** → search "Window Advisor".
+3. Pick your weather + indoor sensor entities; tune setpoints. Defaults are sensible.
 
-See README for the full decision model and TRMNL integration example.
+Then watch `sensor.window_advisor_action` and `binary_sensor.window_advisor_windows_should_be_open`.
+
+See the GitHub README for the full decision model and TRMNL integration example.

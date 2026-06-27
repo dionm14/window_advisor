@@ -1,99 +1,57 @@
-"""Sensor platform: main window-advisor entity + supporting numeric sensors."""
+"""Sensor entities for Window Advisor (config-entry based)."""
 from __future__ import annotations
 
-from datetime import timedelta
 from typing import Any
 
-import voluptuous as vol
-
-from homeassistant.components.sensor import (
-    PLATFORM_SCHEMA, SensorEntity, SensorStateClass,
-)
-from homeassistant.const import CONF_NAME, CONF_SCAN_INTERVAL, EVENT_HOMEASSISTANT_STARTED
-from homeassistant.core import HomeAssistant, Event
-from homeassistant.helpers import config_validation as cv
+from homeassistant.components.sensor import SensorEntity, SensorStateClass
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import (
-    CONF_CO2_THRESHOLD, CONF_CO2_URGENT, CONF_COOLING_SETPOINT,
-    CONF_HEATING_SETPOINT, CONF_HISTORY_HOURS, CONF_HORIZON_HOURS,
-    CONF_HYSTERESIS, CONF_INDOOR_CO2, CONF_INDOOR_HUMIDITY, CONF_INDOOR_NOX,
-    CONF_INDOOR_PM25, CONF_INDOOR_TEMP, CONF_INDOOR_VOC, CONF_MAX_OUTDOOR_DEWPOINT,
-    CONF_MODE, CONF_OUTDOOR_PM25, CONF_OUTDOOR_PM25_VETO, CONF_PM25_RATIO_BUFFER,
-    CONF_WEATHER, DEFAULT_NAME, DEFAULT_SCAN_INTERVAL_S, DOMAIN,
-)
+from .const import DOMAIN
 from .coordinator import WindowAdvisorCoordinator
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
-    vol.Required(CONF_INDOOR_TEMP): cv.entity_id,
-    vol.Required(CONF_INDOOR_HUMIDITY): cv.entity_id,
-    vol.Optional(CONF_INDOOR_CO2): cv.entity_id,
-    vol.Optional(CONF_INDOOR_PM25): cv.entity_id,
-    vol.Optional(CONF_INDOOR_VOC): cv.entity_id,
-    vol.Optional(CONF_INDOOR_NOX): cv.entity_id,
-    vol.Optional(CONF_OUTDOOR_PM25): cv.entity_id,
-    vol.Required(CONF_WEATHER): cv.entity_id,
-    vol.Optional(CONF_MODE, default="auto"): vol.In(["auto", "cool", "heat", "off"]),
-    vol.Optional(CONF_COOLING_SETPOINT, default=24.0): vol.Coerce(float),
-    vol.Optional(CONF_HEATING_SETPOINT, default=20.0): vol.Coerce(float),
-    vol.Optional(CONF_MAX_OUTDOOR_DEWPOINT, default=16.0): vol.Coerce(float),
-    vol.Optional(CONF_CO2_THRESHOLD, default=900.0): vol.Coerce(float),
-    vol.Optional(CONF_CO2_URGENT, default=1400.0): vol.Coerce(float),
-    vol.Optional(CONF_OUTDOOR_PM25_VETO, default=25.0): vol.Coerce(float),
-    vol.Optional(CONF_PM25_RATIO_BUFFER, default=5.0): vol.Coerce(float),
-    vol.Optional(CONF_HORIZON_HOURS, default=8): vol.All(int, vol.Range(min=1, max=48)),
-    vol.Optional(CONF_HYSTERESIS, default=1.5): vol.Coerce(float),
-    vol.Optional(CONF_HISTORY_HOURS, default=2): vol.All(int, vol.Range(min=1, max=24)),
-    # CONF_SCAN_INTERVAL handled by base PLATFORM_SCHEMA (cv.time_period).
-    # Accepts int seconds, "HH:MM:SS", or {seconds: N}. Default applied in setup.
-})
 
-
-async def async_setup_platform(
+async def async_setup_entry(
     hass: HomeAssistant,
-    config: ConfigType,
+    entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
-    discovery_info: DiscoveryInfoType | None = None,
 ) -> None:
-    name = config[CONF_NAME]
-    scan = config.get(CONF_SCAN_INTERVAL) or timedelta(seconds=DEFAULT_SCAN_INTERVAL_S)
-    coordinator = WindowAdvisorCoordinator(hass, name, config, scan)
-
-    hass.data.setdefault(DOMAIN, {})[name] = coordinator
-
-    # First refresh must wait until HA is fully started — otherwise the weather
-    # integration may not have registered its entities yet (states.async_all()
-    # returns [] for weather.* during early startup).
-    async def _first_refresh(_event: Event | None = None) -> None:
-        await coordinator.async_request_refresh()
-
-    if hass.is_running:
-        hass.async_create_task(_first_refresh())
-    else:
-        hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STARTED, _first_refresh)
-
+    coordinator: WindowAdvisorCoordinator = hass.data[DOMAIN][entry.entry_id]
+    name = entry.title
     async_add_entities([
-        WindowAdvisorActionSensor(coordinator, name),
-        WindowAdvisorScoreSensor(coordinator, name),
-        WindowAdvisorModeSensor(coordinator, name),
-        WindowAdvisorTempSlopeSensor(coordinator, name),
-        WindowAdvisorCO2SlopeSensor(coordinator, name),
+        WindowAdvisorActionSensor(coordinator, entry, name),
+        WindowAdvisorScoreSensor(coordinator, entry, name),
+        WindowAdvisorModeSensor(coordinator, entry, name),
+        WindowAdvisorTempSlopeSensor(coordinator, entry, name),
+        WindowAdvisorCO2SlopeSensor(coordinator, entry, name),
     ])
 
 
 class _Base(CoordinatorEntity[WindowAdvisorCoordinator], SensorEntity):
     _attr_should_poll = False
+    _attr_has_entity_name = True
 
-    def __init__(self, coordinator: WindowAdvisorCoordinator, base_name: str, key: str, label: str):
+    def __init__(
+        self,
+        coordinator: WindowAdvisorCoordinator,
+        entry: ConfigEntry,
+        base_name: str,
+        key: str,
+        label: str,
+    ):
         super().__init__(coordinator)
-        self._base = base_name
+        self._entry = entry
         self._key = key
-        self._attr_name = f"{base_name} {label}"
-        slug = base_name.lower().replace(" ", "_")
-        self._attr_unique_id = f"{slug}_{key}"
+        self._attr_name = label
+        self._attr_unique_id = f"{entry.entry_id}_{key}"
+        self._attr_device_info = {
+            "identifiers": {(DOMAIN, entry.entry_id)},
+            "name": base_name,
+            "manufacturer": "window_advisor",
+            "model": "Decision engine",
+        }
 
     @property
     def _decision(self) -> dict[str, Any] | None:
@@ -103,8 +61,8 @@ class _Base(CoordinatorEntity[WindowAdvisorCoordinator], SensorEntity):
 class WindowAdvisorActionSensor(_Base):
     _attr_icon = "mdi:window-open-variant"
 
-    def __init__(self, coordinator: WindowAdvisorCoordinator, base_name: str):
-        super().__init__(coordinator, base_name, "action", "Action")
+    def __init__(self, coordinator, entry, base_name):
+        super().__init__(coordinator, entry, base_name, "action", "Action")
 
     @property
     def native_value(self) -> str | None:
@@ -134,8 +92,8 @@ class WindowAdvisorScoreSensor(_Base):
     _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_icon = "mdi:scale-balance"
 
-    def __init__(self, coordinator: WindowAdvisorCoordinator, base_name: str):
-        super().__init__(coordinator, base_name, "score", "Score")
+    def __init__(self, coordinator, entry, base_name):
+        super().__init__(coordinator, entry, base_name, "score", "Score")
 
     @property
     def native_value(self) -> float | None:
@@ -146,8 +104,8 @@ class WindowAdvisorScoreSensor(_Base):
 class WindowAdvisorModeSensor(_Base):
     _attr_icon = "mdi:thermostat-auto"
 
-    def __init__(self, coordinator: WindowAdvisorCoordinator, base_name: str):
-        super().__init__(coordinator, base_name, "mode", "Mode")
+    def __init__(self, coordinator, entry, base_name):
+        super().__init__(coordinator, entry, base_name, "mode", "Mode")
 
     @property
     def native_value(self) -> str | None:
@@ -160,8 +118,8 @@ class WindowAdvisorTempSlopeSensor(_Base):
     _attr_native_unit_of_measurement = "°C/h"
     _attr_icon = "mdi:trending-up"
 
-    def __init__(self, coordinator: WindowAdvisorCoordinator, base_name: str):
-        super().__init__(coordinator, base_name, "temp_slope", "Indoor Temp Slope")
+    def __init__(self, coordinator, entry, base_name):
+        super().__init__(coordinator, entry, base_name, "temp_slope", "Indoor Temp Slope")
 
     @property
     def native_value(self) -> float | None:
@@ -177,8 +135,8 @@ class WindowAdvisorCO2SlopeSensor(_Base):
     _attr_native_unit_of_measurement = "ppm/h"
     _attr_icon = "mdi:trending-up"
 
-    def __init__(self, coordinator: WindowAdvisorCoordinator, base_name: str):
-        super().__init__(coordinator, base_name, "co2_slope", "Indoor CO2 Slope")
+    def __init__(self, coordinator, entry, base_name):
+        super().__init__(coordinator, entry, base_name, "co2_slope", "Indoor CO2 Slope")
 
     @property
     def native_value(self) -> float | None:

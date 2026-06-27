@@ -1,0 +1,71 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Window Advisor — entities",
+        "description": "Pick the entities Window Advisor should read. Only temperature, humidity, and a weather entity are required.",
+        "data": {
+          "name": "Name",
+          "weather_entity": "Weather entity (with hourly forecast)",
+          "indoor_temp": "Indoor temperature",
+          "indoor_humidity": "Indoor humidity",
+          "indoor_co2": "Indoor CO₂ (optional)",
+          "indoor_pm25": "Indoor PM2.5 (optional)",
+          "indoor_voc": "Indoor VOC index (optional)",
+          "indoor_nox": "Indoor NOx index (optional)",
+          "outdoor_pm25": "Outdoor PM2.5 (optional)"
+        }
+      },
+      "prefs": {
+        "title": "Window Advisor — preferences",
+        "description": "Comfort targets and decision thresholds. Defaults work for most homes.",
+        "data": {
+          "mode": "Mode",
+          "cooling_setpoint": "Cooling setpoint",
+          "heating_setpoint": "Heating setpoint",
+          "max_outdoor_dewpoint": "Max outdoor dewpoint (above this, windows stay closed in cool mode)",
+          "co2_threshold": "CO₂ threshold (boost open recommendation)",
+          "co2_urgent": "CO₂ urgent (force open for health)",
+          "outdoor_pm25_veto": "Outdoor PM2.5 veto (block open)",
+          "pm25_ratio_buffer": "PM2.5 buffer above indoor (block open)",
+          "horizon_hours": "Forecast horizon",
+          "hysteresis": "Hysteresis (anti-flip-flop band)",
+          "history_hours": "History window for trajectory fit"
+        }
+      }
+    },
+    "abort": {
+      "already_configured": "Window Advisor is already configured. Edit it from Settings → Devices & Services."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Window Advisor",
+        "description": "Edit entities and preferences. Changing entities requires HA to reload this integration.",
+        "data": {
+          "name": "Name",
+          "weather_entity": "Weather entity (with hourly forecast)",
+          "indoor_temp": "Indoor temperature",
+          "indoor_humidity": "Indoor humidity",
+          "indoor_co2": "Indoor CO₂ (optional)",
+          "indoor_pm25": "Indoor PM2.5 (optional)",
+          "indoor_voc": "Indoor VOC index (optional)",
+          "indoor_nox": "Indoor NOx index (optional)",
+          "outdoor_pm25": "Outdoor PM2.5 (optional)",
+          "mode": "Mode",
+          "cooling_setpoint": "Cooling setpoint",
+          "heating_setpoint": "Heating setpoint",
+          "max_outdoor_dewpoint": "Max outdoor dewpoint",
+          "co2_threshold": "CO₂ threshold",
+          "co2_urgent": "CO₂ urgent",
+          "outdoor_pm25_veto": "Outdoor PM2.5 veto",
+          "pm25_ratio_buffer": "PM2.5 buffer above indoor",
+          "horizon_hours": "Forecast horizon",
+          "hysteresis": "Hysteresis",
+          "history_hours": "History window"
+        }
+      }
+    }
+  }
+}
